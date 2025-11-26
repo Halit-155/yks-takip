@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
 import 'dart:io';
-// Sadece çalışan paket kaldı:
+// Paketler
 import 'package:image_picker/image_picker.dart';
 
 // ============================================================
@@ -61,7 +61,7 @@ class VeriDeposu {
       tumRozetler.add(Rozet(
           id: "deneme_$i",
           ad: "$i. Deneme",
-          aciklama: "$i deneme tamamladın!",
+          aciklama: "$i deneme bitti!",
           kategori: "Deneme",
           puanDegeri: i * 2,
           ikon: Icons.edit,
@@ -72,7 +72,7 @@ class VeriDeposu {
     tumRozetler.add(Rozet(
         id: "konu_10",
         ad: "Çırak",
-        aciklama: "10 Konu bitti.",
+        aciklama: "10 Konu",
         kategori: "Konu",
         puanDegeri: 50,
         ikon: Icons.book,
@@ -82,7 +82,7 @@ class VeriDeposu {
     tumRozetler.add(Rozet(
         id: "konu_50",
         ad: "Kalfa",
-        aciklama: "50 Konu bitti.",
+        aciklama: "50 Konu",
         kategori: "Konu",
         puanDegeri: 200,
         ikon: Icons.library_books,
@@ -111,7 +111,7 @@ class VeriDeposu {
         mevcutSayi: 0));
   }
 
-  // EXCEL SİMÜLASYONU (Paketsiz - Hatasız)
+  // EXCEL SİMÜLASYONU
   static Future<String> excelDenemeYukle() async {
     await Future.delayed(const Duration(seconds: 1));
     denemeListesi.add(DenemeSonucu(
@@ -123,7 +123,7 @@ class VeriDeposu {
         fen: 10,
         sos: 10));
     puanEkle("101", 50);
-    return "Excel Dosyası İşlendi!\n(Simülasyon: Ahmet Yılmaz'a deneme eklendi.)";
+    return "Excel Yüklendi! (Simülasyon)";
   }
 
   static void puanEkle(String id, int p) {
@@ -616,17 +616,23 @@ class _KisiselBilgiEkraniState extends State<KisiselBilgiEkrani> {
             TextField(
                 controller: adCtrl,
                 decoration: const InputDecoration(
-                    labelText: "Ad Soyad", border: OutlineInputBorder())),
+                    labelText: "Ad Soyad",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person))),
             const SizedBox(height: 15),
             TextField(
                 controller: sinifCtrl,
                 decoration: const InputDecoration(
-                    labelText: "Sınıf", border: OutlineInputBorder())),
+                    labelText: "Sınıf",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.class_))),
             const SizedBox(height: 15),
             TextField(
                 controller: noCtrl,
                 decoration: const InputDecoration(
-                    labelText: "Okul Numarası", border: OutlineInputBorder())),
+                    labelText: "Okul Numarası",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.numbers))),
             const SizedBox(height: 30),
             SizedBox(
                 width: double.infinity,
@@ -641,7 +647,7 @@ class _KisiselBilgiEkraniState extends State<KisiselBilgiEkrani> {
 }
 
 // ============================================================
-// 4. ÖĞRENCİ ANA EKRANI
+// 4. ÖĞRENCİ ANA EKRANI (DASHBOARD)
 // ============================================================
 
 class OgrenciAnaEkrani extends StatelessWidget {
@@ -869,7 +875,7 @@ class _RozetlerEkraniState extends State<RozetlerEkrani>
 }
 
 // ============================================================
-// 4. PROFESYONEL DENEME EKLEME
+// 4. PROFESYONEL DENEME EKLEME (AYRIŞTIRILMIŞ)
 // ============================================================
 class DenemeEkleEkrani extends StatefulWidget {
   final String ogrenciId;
