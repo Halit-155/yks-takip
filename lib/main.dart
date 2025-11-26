@@ -1,39 +1,43 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
+import 'dart:io';
+// Sadece çalışan paket kaldı:
+import 'package:image_picker/image_picker.dart';
 
 // ============================================================
-// 1. GLOBAL VERİ DEPOSU VE MODELLER
+// 1. GLOBAL VERİ DEPOSU
 // ============================================================
 
 class VeriDeposu {
   static List<Gorev> kayitliProgram = [];
   static List<DenemeSonucu> denemeListesi = [];
+  static Map<String, bool> tamamlananKonular = {};
 
-  // Örnek Öğrenci Verileri
   static List<Ogrenci> ogrenciler = [
     Ogrenci(
         id: "101",
         ad: "Ahmet Yılmaz",
         sinif: "12",
         puan: 1250,
-        atananOgretmenId: "t1"),
+        atananOgretmenId: "t1",
+        fotoUrl: ""),
     Ogrenci(
         id: "102",
         ad: "Ayşe Demir",
         sinif: "12",
         puan: 2400,
-        atananOgretmenId: "t1"),
+        atananOgretmenId: "t1",
+        fotoUrl: ""),
   ];
 
   static List<Ogretmen> ogretmenler = [
     Ogretmen(id: "t1", ad: "Mustafa Hoca", brans: "Matematik"),
+    Ogretmen(id: "t2", ad: "Elif Hoca", brans: "Edebiyat"),
   ];
 
   static List<Mesaj> mesajlar = [];
   static List<Rozet> tumRozetler = [];
-
-  // Okul Dersleri (Varsayılan)
   static List<OkulDersi> okulNotlari = [
     OkulDersi(ad: "Kur'an-ı Kerim", yazili1: 0, yazili2: 0, performans: 0),
     OkulDersi(ad: "Arapça", yazili1: 0, yazili2: 0, performans: 0),
@@ -41,16 +45,16 @@ class VeriDeposu {
     OkulDersi(ad: "Türk Dili ve Edb.", yazili1: 0, yazili2: 0, performans: 0),
     OkulDersi(ad: "Tarih", yazili1: 0, yazili2: 0, performans: 0),
     OkulDersi(ad: "Coğrafya", yazili1: 0, yazili2: 0, performans: 0),
-    OkulDersi(ad: "Felsefe", yazili1: 0, yazili2: 0, performans: 0),
     OkulDersi(ad: "Fizik", yazili1: 0, yazili2: 0, performans: 0),
     OkulDersi(ad: "Kimya", yazili1: 0, yazili2: 0, performans: 0),
     OkulDersi(ad: "Biyoloji", yazili1: 0, yazili2: 0, performans: 0),
-    OkulDersi(ad: "İngilizce", yazili1: 0, yazili2: 0, performans: 0),
+    OkulDersi(ad: "Felsefe", yazili1: 0, yazili2: 0, performans: 0),
+    OkulDersi(ad: "Din Kültürü", yazili1: 0, yazili2: 0, performans: 0),
+    OkulDersi(ad: "Hadis", yazili1: 0, yazili2: 0, performans: 0),
+    OkulDersi(ad: "Siyer", yazili1: 0, yazili2: 0, performans: 0),
+    OkulDersi(ad: "Fıkıh", yazili1: 0, yazili2: 0, performans: 0),
   ];
 
-  static Map<String, bool> tamamlananKonular = {};
-
-  // --- BAŞLANGIÇTA ROZETLERİ OLUŞTUR ---
   static void baslat() {
     if (tumRozetler.isNotEmpty) return;
     for (int i = 5; i <= 100; i += 5) {
@@ -67,7 +71,7 @@ class VeriDeposu {
     }
     tumRozetler.add(Rozet(
         id: "konu_10",
-        ad: "Başlangıç",
+        ad: "Çırak",
         aciklama: "10 Konu bitti.",
         kategori: "Konu",
         puanDegeri: 50,
@@ -77,7 +81,7 @@ class VeriDeposu {
         mevcutSayi: 0));
     tumRozetler.add(Rozet(
         id: "konu_50",
-        ad: "Yarıladık",
+        ad: "Kalfa",
         aciklama: "50 Konu bitti.",
         kategori: "Konu",
         puanDegeri: 200,
@@ -88,7 +92,7 @@ class VeriDeposu {
     tumRozetler.add(Rozet(
         id: "puan_1000",
         ad: "Hırslı",
-        aciklama: "1000 Puan.",
+        aciklama: "1000 Puan",
         kategori: "Seviye",
         puanDegeri: 0,
         ikon: Icons.star,
@@ -98,7 +102,7 @@ class VeriDeposu {
     tumRozetler.add(Rozet(
         id: "puan_5000",
         ad: "Efsane",
-        aciklama: "5000 Puan.",
+        aciklama: "5000 Puan",
         kategori: "Seviye",
         puanDegeri: 0,
         ikon: Icons.diamond,
@@ -107,21 +111,35 @@ class VeriDeposu {
         mevcutSayi: 0));
   }
 
-  static void puanEkle(String ogrId, int miktar) {
-    var o = ogrenciler.firstWhere((e) => e.id == ogrId,
-        orElse: () => ogrenciler[0]);
-    o.puan += miktar;
-    _rozetleriGuncelle();
+  // EXCEL SİMÜLASYONU (Paketsiz - Hatasız)
+  static Future<String> excelDenemeYukle() async {
+    await Future.delayed(const Duration(seconds: 1));
+    denemeListesi.add(DenemeSonucu(
+        ogrenciId: "101",
+        tur: "TYT (Excel)",
+        tarih: DateTime.now(),
+        turkce: 30,
+        mat: 20,
+        fen: 10,
+        sos: 10));
+    puanEkle("101", 50);
+    return "Excel Dosyası İşlendi!\n(Simülasyon: Ahmet Yılmaz'a deneme eklendi.)";
   }
 
-  static void _rozetleriGuncelle() {
-    int denemeSayisi = denemeListesi.length;
-    int bitenKonu = tamamlananKonular.values.where((e) => e).length;
-    int puan = ogrenciler[0].puan;
+  static void puanEkle(String id, int p) {
+    var o =
+        ogrenciler.firstWhere((e) => e.id == id, orElse: () => ogrenciler[0]);
+    o.puan += p;
+    rozetleriGuncelle();
+  }
 
+  static void rozetleriGuncelle() {
+    int dSayisi = denemeListesi.length;
+    int kSayisi = tamamlananKonular.values.where((e) => e).length;
+    int puan = ogrenciler[0].puan;
     for (var r in tumRozetler) {
-      if (r.kategori == "Deneme") r.mevcutSayi = denemeSayisi;
-      if (r.kategori == "Konu") r.mevcutSayi = bitenKonu;
+      if (r.kategori == "Deneme") r.mevcutSayi = dSayisi;
+      if (r.kategori == "Konu") r.mevcutSayi = kSayisi;
       if (r.kategori == "Seviye") r.mevcutSayi = puan;
       if (r.mevcutSayi >= r.hedefSayi && !r.kazanildi) {
         r.kazanildi = true;
@@ -130,25 +148,43 @@ class VeriDeposu {
     }
   }
 
-  static void programiKaydet(List<List<Map<String, dynamic>>> tabloVerisi) {
+  static void ogrenciGuncelle(
+      String id, String ad, String sinif, String no, String foto) {
+    int idx = ogrenciler.indexWhere((o) => o.id == id);
+    if (idx != -1) {
+      ogrenciler[idx].ad = ad;
+      ogrenciler[idx].sinif = sinif;
+      ogrenciler[idx].id = no;
+      ogrenciler[idx].fotoUrl = foto;
+    } else {
+      ogrenciler
+          .add(Ogrenci(id: no, ad: ad, sinif: sinif, puan: 0, fotoUrl: foto));
+    }
+  }
+
+  static void programiKaydet(List<List<Map<String, dynamic>>> t) {
     kayitliProgram.clear();
-    for (int i = 0; i < tabloVerisi.length; i++) {
-      var hafta = tabloVerisi[i];
+    for (int i = 0; i < t.length; i++) {
+      var hafta = t[i];
       int hNo = i + 1;
       for (var gun in hafta) {
         String gAd = gun['gun'];
         List blk = gun['bloklar'];
-        for (var b in blk) {
+        for (var b in blk)
           kayitliProgram.add(Gorev(
               hafta: hNo,
               gun: gAd,
               saat: b['saat'],
               ders: b['ders'],
               konu: b['konu']));
-        }
       }
     }
     puanEkle("101", 100);
+  }
+
+  static void denemeEkle(DenemeSonucu d) {
+    denemeListesi.add(d);
+    puanEkle(d.ogrenciId, 20);
   }
 
   static void dersEkle(String ad) {
@@ -160,16 +196,9 @@ class VeriDeposu {
     okulNotlari.removeAt(index);
   }
 
-  static void denemeEkle(DenemeSonucu d) {
-    denemeListesi.add(d);
-    puanEkle("101", 20);
-    _rozetleriGuncelle();
-  }
-
   static void konuDurumDegistir(String k, bool v) {
     tamamlananKonular[k] = v;
     if (v) puanEkle("101", 10);
-    _rozetleriGuncelle();
   }
 
   static void mesajGonder(String g, String a, String i) {
@@ -178,9 +207,9 @@ class VeriDeposu {
   }
 }
 
-// --- MODELLER ---
+// MODELLER
 class Ogrenci {
-  String id, ad, sinif;
+  String id, ad, sinif, fotoUrl;
   int puan;
   String? atananOgretmenId;
   Ogrenci(
@@ -188,7 +217,8 @@ class Ogrenci {
       required this.ad,
       required this.sinif,
       required this.puan,
-      this.atananOgretmenId});
+      this.atananOgretmenId,
+      this.fotoUrl = ""});
 }
 
 class Ogretmen {
@@ -245,17 +275,18 @@ class Gorev {
 }
 
 class DenemeSonucu {
-  String tur;
+  String ogrenciId, tur;
   DateTime tarih;
-  double t, m, f, s, toplam;
+  double turkce, mat, fen, sos, toplam;
   DenemeSonucu(
-      {required this.tur,
+      {required this.ogrenciId,
+      required this.tur,
       required this.tarih,
-      required this.t,
-      required this.m,
-      required this.f,
-      required this.s})
-      : toplam = t + m + f + s;
+      required this.turkce,
+      required this.mat,
+      required this.fen,
+      required this.sos})
+      : toplam = turkce + mat + fen + sos;
 }
 
 class OkulDersi {
@@ -275,109 +306,56 @@ class OkulDersi {
   }
 }
 
-// AĞIRLIKLI KONULAR VE DERSLER
 final Map<String, List<KonuDetay>> dersKonuAgirliklari = {
   "TYT Matematik": [
     KonuDetay("Temel Kavramlar", 3),
-    KonuDetay("Sayı Basamakları", 1),
-    KonuDetay("Bölme-Bölünebilme", 1),
-    KonuDetay("EBOB-EKOK", 2),
-    KonuDetay("Rasyonel Sayılar", 1),
-    KonuDetay("Üslü Sayılar", 2),
-    KonuDetay("Köklü Sayılar", 2),
     KonuDetay("Problemler", 10),
-    KonuDetay("Kümeler", 1),
-    KonuDetay("Fonksiyonlar", 3),
-    KonuDetay("Polinomlar", 2),
-    KonuDetay("PKOB", 2)
+    KonuDetay("Fonksiyonlar", 3)
   ],
-  "TYT Türkçe": [
-    KonuDetay("Sözcükte Anlam", 2),
-    KonuDetay("Cümlede Anlam", 2),
-    KonuDetay("Paragraf", 15),
-    KonuDetay("Ses Bilgisi", 1),
-    KonuDetay("Yazım Kuralları", 2),
-    KonuDetay("Noktalama", 2),
-    KonuDetay("Dil Bilgisi", 3)
-  ],
+  "TYT Türkçe": [KonuDetay("Paragraf", 15), KonuDetay("Dil Bilgisi", 3)],
   "TYT Fen": [
-    KonuDetay("Fizik Bilimine Giriş", 1),
-    KonuDetay("Madde ve Özellikleri", 1),
-    KonuDetay("Hareket ve Kuvvet", 3),
-    KonuDetay("İş Güç Enerji", 3),
-    KonuDetay("Isı ve Sıcaklık", 3),
-    KonuDetay("Optik", 5),
-    KonuDetay("Atom", 2),
-    KonuDetay("Kimyasal Türler", 2),
-    KonuDetay("Hücre", 2),
-    KonuDetay("Canlılar", 2)
+    KonuDetay("Fizik Bilimi", 1),
+    KonuDetay("Hareket", 3),
+    KonuDetay("Atom", 2)
   ],
   "TYT Sosyal": [
     KonuDetay("Tarih Bilimi", 1),
-    KonuDetay("İlk Çağ", 1),
-    KonuDetay("Türk Tarihi", 2),
-    KonuDetay("Osmanlı", 3),
     KonuDetay("Milli Mücadele", 3),
-    KonuDetay("Coğrafi Konum", 2),
-    KonuDetay("İklim", 2),
-    KonuDetay("Felsefe", 2),
-    KonuDetay("Din", 2)
+    KonuDetay("Coğrafya", 2)
   ],
   "AYT Matematik": [
     KonuDetay("Trigonometri", 5),
     KonuDetay("Logaritma", 3),
-    KonuDetay("Diziler", 2),
-    KonuDetay("Limit", 3),
     KonuDetay("Türev", 8),
     KonuDetay("İntegral", 8)
   ],
   "AYT Fen": [
-    KonuDetay("Vektörler", 2),
     KonuDetay("Elektrik", 5),
-    KonuDetay("Modern Fizik", 3),
-    KonuDetay("Gazlar", 3),
     KonuDetay("Organik Kimya", 6),
-    KonuDetay("Sistemler", 6),
-    KonuDetay("Bitki Biyolojisi", 3)
+    KonuDetay("Sistemler", 6)
   ],
   "AYT Edebiyat-Sosyal": [
-    KonuDetay("Şiir Bilgisi", 3),
     KonuDetay("Divan Edebiyatı", 5),
-    KonuDetay("Tanzimat", 3),
     KonuDetay("Cumhuriyet", 6),
-    KonuDetay("Tarih", 4),
-    KonuDetay("Coğrafya", 4)
+    KonuDetay("Tarih", 4)
   ]
 };
-
 final Map<String, Map<String, dynamic>> tumDerslerGlobal = {
   "TYT Türkçe": {
     "katsayi": 40,
-    "konular": ["Sözcükte Anlam", "Paragraf", "Dil Bilgisi", "Yazım-Noktalama"]
+    "konular": ["Sözcükte Anlam", "Paragraf", "Dil Bilgisi"]
   },
   "TYT Matematik": {
     "katsayi": 40,
-    "konular": [
-      "Temel Kavramlar",
-      "Problemler",
-      "Fonksiyonlar",
-      "PKOB",
-      "Üslü-Köklü"
-    ]
+    "konular": ["Temel Kavramlar", "Problemler", "Fonksiyonlar"]
   },
   "TYT Fen": {
     "katsayi": 20,
-    "konular": ["Fizik Bilimi", "Hareket", "Atom", "Hücre", "Canlılar"]
+    "konular": ["Fizik Bilimi", "Hareket", "Atom", "Hücre"]
   },
   "TYT Sosyal": {
     "katsayi": 20,
-    "konular": [
-      "Tarih Bilimi",
-      "Milli Mücadele",
-      "Coğrafi Konum",
-      "Felsefe",
-      "Din"
-    ]
+    "konular": ["Tarih Bilimi", "Milli Mücadele", "Coğrafya", "Felsefe"]
   },
   "AYT Matematik": {
     "katsayi": 40,
@@ -385,11 +363,11 @@ final Map<String, Map<String, dynamic>> tumDerslerGlobal = {
   },
   "AYT Fen": {
     "katsayi": 40,
-    "konular": ["Elektrik", "Organik Kimya", "Sistemler", "Bitki Biyolojisi"]
+    "konular": ["Elektrik", "Organik Kimya", "Sistemler"]
   },
   "AYT Edebiyat-Sosyal": {
     "katsayi": 40,
-    "konular": ["Divan Edebiyatı", "Cumhuriyet Dönemi", "Tarih", "Coğrafya"]
+    "konular": ["Divan Edebiyatı", "Cumhuriyet", "Tarih", "Coğrafya"]
   }
 };
 
@@ -435,7 +413,6 @@ class _GirisEkraniState extends State<GirisEkrani>
   void _giris() {
     String k = _k.text.trim(), s = _s.text.trim();
     int r = _tc.index;
-    // Yönetici
     if (r == 2) {
       if (k == "Halit155" && s == "05376835")
         Navigator.push(
@@ -446,7 +423,6 @@ class _GirisEkraniState extends State<GirisEkrani>
             backgroundColor: Colors.red));
       return;
     }
-    // Öğretmen
     if (r == 1) {
       if (k.isNotEmpty)
         Navigator.push(
@@ -458,129 +434,228 @@ class _GirisEkraniState extends State<GirisEkrani>
             const SnackBar(content: Text('Kullanıcı Adı Giriniz (Demo: t1)')));
       return;
     }
-    // Öğrenci
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (c) => const OgrenciAnaEkrani(ogrenciId: "101")));
+    if (r == 0) {
+      if (VeriDeposu.ogrenciler.any((o) => o.id == k))
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (c) => KisiselBilgiEkrani(ogrenciId: k)));
+      else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Öğrenci Bulunamadı (Demo: 101)')));
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (c) => const KisiselBilgiEkrani(ogrenciId: "101")));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    var size = MediaQuery.of(context).size;
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-          backgroundColor: Colors.grey[100],
-          body: SizedBox(
-              height: size.height,
-              child: Stack(children: [
-                Container(
-                    height: size.height * 0.4,
-                    decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                            colors: [Color(0xFF1A237E), Color(0xFF3949AB)]),
-                        borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(60)))),
-                SingleChildScrollView(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+            backgroundColor: Colors.grey[100],
+            body: Center(
+                child: SingleChildScrollView(
                     child: Column(children: [
-                  const SizedBox(height: 60),
-                  const Icon(Icons.school, size: 80, color: Colors.white),
-                  const SizedBox(height: 10),
-                  const Text("BAYBURT ANADOLU\nİMAM HATİP LİSESİ",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+              const Icon(Icons.school, size: 80, color: Colors.indigo),
+              const SizedBox(height: 20),
+              const Text("BAYBURT ANADOLU\nİMAM HATİP LİSESİ",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 30),
+              Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
                           color: Colors.white,
-                          letterSpacing: 1)),
-                  const Text("YKS Takip Platformu",
-                      style: TextStyle(color: Colors.white70)),
-                  const SizedBox(height: 30),
-                  Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Container(
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 10))
-                              ]),
-                          child: Column(children: [
-                            Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Container(
-                                    height: 45,
-                                    decoration: BoxDecoration(
-                                        color: Colors.grey[200],
-                                        borderRadius:
-                                            BorderRadius.circular(25)),
-                                    child: TabBar(
-                                        controller: _tc,
-                                        indicator: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(25),
-                                            color: Colors.indigo),
-                                        labelColor: Colors.white,
-                                        unselectedLabelColor: Colors.grey,
-                                        labelStyle: const TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                        tabs: const [
-                                          Tab(text: 'Öğrenci'),
-                                          Tab(text: 'Öğretmen'),
-                                          Tab(text: 'Yönetici')
-                                        ]))),
-                            Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: Column(children: [
-                                  TextField(
-                                      controller: _k,
-                                      decoration: const InputDecoration(
-                                          labelText: "Kullanıcı Adı / ID",
-                                          prefixIcon: Icon(Icons.person),
-                                          border: OutlineInputBorder())),
-                                  const SizedBox(height: 20),
-                                  TextField(
-                                      controller: _s,
-                                      obscureText: _g,
-                                      decoration: InputDecoration(
-                                          labelText: "Şifre",
-                                          prefixIcon: Icon(Icons.lock),
-                                          suffixIcon: IconButton(
-                                              icon: Icon(_g
-                                                  ? Icons.visibility_off
-                                                  : Icons.visibility),
-                                              onPressed: () =>
-                                                  setState(() => _g = !_g)),
-                                          border: const OutlineInputBorder())),
-                                  const SizedBox(height: 20),
-                                  SizedBox(
-                                      width: double.infinity,
-                                      height: 50,
-                                      child: ElevatedButton(
-                                          onPressed: _giris,
-                                          style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.indigo,
-                                              foregroundColor: Colors.white),
-                                          child: const Text("GİRİŞ YAP")))
-                                ]))
-                          ]))),
-                ]))
-              ]))),
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Column(children: [
+                        TabBar(
+                            controller: _tc,
+                            labelColor: Colors.indigo,
+                            unselectedLabelColor: Colors.grey,
+                            tabs: const [
+                              Tab(text: 'Öğrenci'),
+                              Tab(text: 'Öğretmen'),
+                              Tab(text: 'Yönetici')
+                            ]),
+                        const SizedBox(height: 20),
+                        TextField(
+                            controller: _k,
+                            decoration: const InputDecoration(
+                                labelText: "Kullanıcı Adı / ID",
+                                border: OutlineInputBorder())),
+                        const SizedBox(height: 10),
+                        TextField(
+                            controller: _s,
+                            obscureText: _g,
+                            decoration: InputDecoration(
+                                labelText: "Şifre",
+                                suffixIcon: IconButton(
+                                    icon: Icon(_g
+                                        ? Icons.visibility_off
+                                        : Icons.visibility),
+                                    onPressed: () => setState(() => _g = !_g)),
+                                border: const OutlineInputBorder())),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                                onPressed: _giris,
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.indigo,
+                                    foregroundColor: Colors.white),
+                                child: const Text("GİRİŞ YAP")))
+                      ])))
+            ])))));
+  }
+}
+
+// ============================================================
+// 3. KİŞİSEL BİLGİ EKRANI
+// ============================================================
+class KisiselBilgiEkrani extends StatefulWidget {
+  final String ogrenciId;
+  const KisiselBilgiEkrani({super.key, required this.ogrenciId});
+  @override
+  State<KisiselBilgiEkrani> createState() => _KisiselBilgiEkraniState();
+}
+
+class _KisiselBilgiEkraniState extends State<KisiselBilgiEkrani> {
+  late TextEditingController adCtrl, sinifCtrl, noCtrl;
+  String fotoUrl = "";
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    var ogr = VeriDeposu.ogrenciler.firstWhere((o) => o.id == widget.ogrenciId,
+        orElse: () => VeriDeposu.ogrenciler[0]);
+    adCtrl = TextEditingController(text: ogr.ad);
+    sinifCtrl = TextEditingController(text: ogr.sinif);
+    noCtrl = TextEditingController(text: ogr.id);
+    fotoUrl = ogr.fotoUrl;
+  }
+
+  void _kaydet() {
+    VeriDeposu.ogrenciGuncelle(
+        widget.ogrenciId, adCtrl.text, sinifCtrl.text, noCtrl.text, fotoUrl);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Bilgiler Güncellendi!"), backgroundColor: Colors.green));
+    Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (c) => OgrenciAnaEkrani(ogrenciId: noCtrl.text)));
+  }
+
+  Future<void> _galeridenSec() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) setState(() => fotoUrl = image.path);
+  }
+
+  Future<void> _kameradanCek() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image != null) setState(() => fotoUrl = image.path);
+  }
+
+  void _secimPenceresi() {
+    showModalBottomSheet(
+        context: context,
+        builder: (context) => SafeArea(
+                child: Wrap(children: [
+              ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Galeriden Seç'),
+                  onTap: () {
+                    _galeridenSec();
+                    Navigator.pop(context);
+                  }),
+              ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Kamera ile Çek'),
+                  onTap: () {
+                    _kameradanCek();
+                    Navigator.pop(context);
+                  }),
+            ])));
+  }
+
+  ImageProvider _resimSaglayici() {
+    if (fotoUrl.isEmpty)
+      return const NetworkImage(
+          "https://cdn-icons-png.flaticon.com/512/3135/3135715.png");
+    if (fotoUrl.startsWith('http')) return NetworkImage(fotoUrl);
+    return FileImage(File(fotoUrl));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar:
+          AppBar(title: const Text("Profil"), backgroundColor: Colors.indigo),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            GestureDetector(
+                onTap: _secimPenceresi,
+                child: Stack(alignment: Alignment.bottomRight, children: [
+                  CircleAvatar(radius: 60, backgroundImage: _resimSaglayici()),
+                  const CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.camera_alt,
+                          size: 20, color: Colors.indigo))
+                ])),
+            const SizedBox(height: 20),
+            TextField(
+                controller: adCtrl,
+                decoration: const InputDecoration(
+                    labelText: "Ad Soyad", border: OutlineInputBorder())),
+            const SizedBox(height: 15),
+            TextField(
+                controller: sinifCtrl,
+                decoration: const InputDecoration(
+                    labelText: "Sınıf", border: OutlineInputBorder())),
+            const SizedBox(height: 15),
+            TextField(
+                controller: noCtrl,
+                decoration: const InputDecoration(
+                    labelText: "Okul Numarası", border: OutlineInputBorder())),
+            const SizedBox(height: 30),
+            SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                    onPressed: _kaydet, child: const Text("KAYDET VE BAŞLA")))
+          ],
+        ),
+      ),
     );
   }
 }
 
 // ============================================================
-// 3. ÖĞRENCİ PANELİ
+// 4. ÖĞRENCİ ANA EKRANI
 // ============================================================
 
 class OgrenciAnaEkrani extends StatelessWidget {
   final String ogrenciId;
   const OgrenciAnaEkrani({super.key, required this.ogrenciId});
+
+  ImageProvider _avatarGoster(String url) {
+    if (url.isEmpty)
+      return const NetworkImage(
+          "https://cdn-icons-png.flaticon.com/512/3135/3135715.png");
+    if (url.startsWith('http')) return NetworkImage(url);
+    return FileImage(File(url));
+  }
+
   @override
   Widget build(BuildContext context) {
     var ogr = VeriDeposu.ogrenciler.firstWhere((e) => e.id == ogrenciId,
@@ -593,7 +668,7 @@ class OgrenciAnaEkrani extends StatelessWidget {
               accountName: Text(ogr.ad),
               accountEmail: Text("XP: ${ogr.puan}"),
               currentAccountPicture:
-                  const CircleAvatar(child: Icon(Icons.person))),
+                  CircleAvatar(backgroundImage: _avatarGoster(ogr.fotoUrl))),
           ListTile(
               leading: const Icon(Icons.message),
               title: const Text("Mesajlar"),
@@ -615,6 +690,16 @@ class OgrenciAnaEkrani extends StatelessWidget {
                                     itemBuilder: (c, i) => ListTile(
                                         title: Text(m[i].gonderen),
                                         subtitle: Text(m[i].icerik))))));
+              }),
+          ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text("Profili Düzenle"),
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (c) =>
+                            KisiselBilgiEkrani(ogrenciId: ogrenciId)));
               })
         ])),
         body: Padding(
@@ -638,9 +723,15 @@ class OgrenciAnaEkrani extends StatelessWidget {
                   _btn(context, Icons.edit_calendar, "MANUEL PROGRAM",
                       Colors.orange, const ManuelProgramEkrani()),
                   _btn(context, Icons.add_chart, "DENEME EKLE", Colors.green,
-                      const DenemeEkleEkrani()),
+                      DenemeEkleEkrani(ogrenciId: ogrenciId)),
                   _btn(context, Icons.bar_chart, "GRAFİK", Colors.purple,
-                      const BasariGrafigiEkrani()),
+                      BasariGrafigiEkrani(ogrenciId: ogrenciId)),
+                  _btn(
+                      context,
+                      Icons.view_list,
+                      "DENEME LİSTESİ",
+                      Colors.deepPurple,
+                      DenemeListesiEkrani(ogrenciId: ogrenciId)),
                   _btn(context, Icons.school, "OKUL NOTLARI", Colors.brown,
                       const OkulSinavlariEkrani()),
                   _btn(context, Icons.timer, "SAYAÇ", Colors.redAccent,
@@ -669,6 +760,7 @@ class OgrenciAnaEkrani extends StatelessWidget {
   }
 }
 
+// --- DİĞER EKRANLAR ---
 class KonuTakipEkrani extends StatefulWidget {
   const KonuTakipEkrani({super.key});
   @override
@@ -737,7 +829,7 @@ class _RozetlerEkraniState extends State<RozetlerEkrani>
   void initState() {
     super.initState();
     _tc = TabController(length: 3, vsync: this);
-    VeriDeposu._rozetleriGuncelle();
+    VeriDeposu.rozetleriGuncelle();
   }
 
   Widget _list(String k) {
@@ -776,8 +868,12 @@ class _RozetlerEkraniState extends State<RozetlerEkrani>
   }
 }
 
+// ============================================================
+// 4. PROFESYONEL DENEME EKLEME
+// ============================================================
 class DenemeEkleEkrani extends StatefulWidget {
-  const DenemeEkleEkrani({super.key});
+  final String ogrenciId;
+  const DenemeEkleEkrani({super.key, required this.ogrenciId});
   @override
   State<DenemeEkleEkrani> createState() => _DenemeEkleEkraniState();
 }
@@ -792,17 +888,38 @@ class DersGiris {
 }
 
 class _DenemeEkleEkraniState extends State<DenemeEkleEkrani> {
-  List<DersGiris> tyt = [
-    DersGiris("Türkçe", 40),
-    DersGiris("Sosyal", 20),
-    DersGiris("Matematik", 40),
-    DersGiris("Fen", 20)
+  List<DersGiris> tytTurkce = [DersGiris("Türkçe", 40)];
+  List<DersGiris> tytSosyal = [
+    DersGiris("Tarih", 5),
+    DersGiris("Coğrafya", 5),
+    DersGiris("Felsefe", 5),
+    DersGiris("Din K.", 5)
   ];
-  List<DersGiris> ayt = [
-    DersGiris("Matematik", 40),
-    DersGiris("Fen", 40),
-    DersGiris("Edb-Sos1", 40),
-    DersGiris("Sos-2", 40)
+  List<DersGiris> tytMat = [
+    DersGiris("Matematik", 30),
+    DersGiris("Geometri", 10)
+  ];
+  List<DersGiris> tytFen = [
+    DersGiris("Fizik", 7),
+    DersGiris("Kimya", 7),
+    DersGiris("Biyoloji", 6)
+  ];
+  List<DersGiris> aytMat = [DersGiris("Matematik", 40)];
+  List<DersGiris> aytFen = [
+    DersGiris("Fizik", 14),
+    DersGiris("Kimya", 13),
+    DersGiris("Biyoloji", 13)
+  ];
+  List<DersGiris> aytEa = [
+    DersGiris("Edebiyat", 24),
+    DersGiris("Tarih-1", 10),
+    DersGiris("Coğrafya-1", 6)
+  ];
+  List<DersGiris> aytSoz = [
+    DersGiris("Tarih-2", 11),
+    DersGiris("Coğrafya-2", 11),
+    DersGiris("Felsefe Grb", 12),
+    DersGiris("Din K.", 6)
   ];
 
   void _hesapla(DersGiris d) {
@@ -811,24 +928,32 @@ class _DenemeEkleEkraniState extends State<DenemeEkleEkrani> {
     setState(() => d.r = dog - (yan / 4));
   }
 
-  void _kaydet(String tur, List<DersGiris> l) {
+  double _topla(List<DersGiris> l) => l.fold(0, (s, i) => s + i.r);
+
+  void _kaydet(String tur) {
     double t = 0, m = 0, f = 0, s = 0;
     if (tur == "TYT") {
-      t = l[0].r;
-      s = l[1].r;
-      m = l[2].r;
-      f = l[3].r;
+      t = _topla(tytTurkce);
+      s = _topla(tytSosyal);
+      m = _topla(tytMat);
+      f = _topla(tytFen);
     } else {
-      m = l[0].r;
-      f = l[1].r;
-      t = l[2].r;
-      s = l[3].r;
+      m = _topla(aytMat);
+      f = _topla(aytFen);
+      t = _topla(aytEa);
+      s = _topla(aytSoz);
     }
-    VeriDeposu.denemeEkle(
-        DenemeSonucu(tur: tur, tarih: DateTime.now(), t: t, m: m, f: f, s: s));
+    VeriDeposu.denemeEkle(DenemeSonucu(
+        ogrenciId: widget.ogrenciId,
+        tur: tur,
+        tarih: DateTime.now(),
+        turkce: t,
+        mat: m,
+        fen: f,
+        sos: s));
     Navigator.pop(context);
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Kaydedildi")));
+        .showSnackBar(const SnackBar(content: Text("Deneme Kaydedildi!")));
   }
 
   @override
@@ -843,50 +968,74 @@ class _DenemeEkleEkraniState extends State<DenemeEkleEkrani> {
                     backgroundColor: Colors.green,
                     bottom: const TabBar(
                         tabs: [Tab(text: "TYT"), Tab(text: "AYT")])),
-                body: TabBarView(
-                    children: [_form("TYT", tyt), _form("AYT", ayt)]))));
+                body: TabBarView(children: [
+                  _buildForm("TYT", [
+                    _baslik("TÜRKÇE (40)"),
+                    ...tytTurkce.map((d) => _satir(d)),
+                    _baslik("SOSYAL (20)"),
+                    ...tytSosyal.map((d) => _satir(d)),
+                    _baslik("MATEMATİK (40)"),
+                    ...tytMat.map((d) => _satir(d)),
+                    _baslik("FEN (20)"),
+                    ...tytFen.map((d) => _satir(d))
+                  ]),
+                  _buildForm("AYT", [
+                    _baslik("MATEMATİK"),
+                    ...aytMat.map((d) => _satir(d)),
+                    _baslik("FEN BİLİMLERİ"),
+                    ...aytFen.map((d) => _satir(d)),
+                    _baslik("TÜRK DİLİ VE EDB - SOS-1"),
+                    ...aytEa.map((d) => _satir(d)),
+                    _baslik("SOSYAL BİLİMLER-2"),
+                    ...aytSoz.map((d) => _satir(d))
+                  ])
+                ]))));
   }
 
-  Widget _form(String t, List<DersGiris> l) {
+  Widget _buildForm(String tur, List<Widget> children) {
     return Column(children: [
       Expanded(
-          child: ListView(
-              children: l
-                  .map((d) => Card(
-                      child: Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Row(children: [
-                            Expanded(flex: 3, child: Text("${d.n} (${d.s})")),
-                            Expanded(
-                                child: TextField(
-                                    controller: d.d,
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    decoration:
-                                        const InputDecoration(labelText: "D"),
-                                    onChanged: (v) => _hesapla(d))),
-                            const SizedBox(width: 5),
-                            Expanded(
-                                child: TextField(
-                                    controller: d.y,
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    decoration:
-                                        const InputDecoration(labelText: "Y"),
-                                    onChanged: (v) => _hesapla(d))),
-                            Expanded(
-                                child:
-                                    Center(child: Text(d.r.toStringAsFixed(2))))
-                          ]))))
-                  .toList())),
-      ElevatedButton(
-          onPressed: () => _kaydet(t, l), child: const Text("KAYDET"))
+          child:
+              ListView(padding: const EdgeInsets.all(10), children: children)),
+      ElevatedButton(onPressed: () => _kaydet(tur), child: Text("$tur KAYDET"))
     ]);
+  }
+
+  Widget _baslik(String t) => Container(
+      padding: const EdgeInsets.all(8),
+      color: Colors.green[50],
+      child: Text(t,
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, color: Colors.green)));
+  Widget _satir(DersGiris d) {
+    return Card(
+        child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(children: [
+              Expanded(flex: 3, child: Text(d.n)),
+              Expanded(
+                  child: TextField(
+                      controller: d.d,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: "D"),
+                      onChanged: (v) => _hesapla(d))),
+              const SizedBox(width: 5),
+              Expanded(
+                  child: TextField(
+                      controller: d.y,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: "Y"),
+                      onChanged: (v) => _hesapla(d))),
+              Expanded(child: Center(child: Text(d.r.toStringAsFixed(2))))
+            ])));
   }
 }
 
+// ============================================================
+// 5. YAPAY ZEKA ASİSTANI
+// ============================================================
 class YapayZekaAsistanEkrani extends StatefulWidget {
   const YapayZekaAsistanEkrani({super.key});
   @override
@@ -924,17 +1073,20 @@ class _YapayZekaAsistanEkraniState extends State<YapayZekaAsistanEkrani>
   }
 
   int _hesaplaKalanHaftalar() {
-    int y = DateTime.now().year + (DateTime.now().month > 6 ? 1 : 0);
-    return (DateTime(y, 6, 15).difference(DateTime.now()).inDays / 7)
-        .ceil()
-        .clamp(1, 40);
+    DateTime simdi = DateTime.now();
+    int sinavYili = (simdi.month > 5) ? simdi.year + 1 : simdi.year;
+    DateTime sinavTarihi = DateTime(sinavYili, 5, 31);
+    int hafta = (sinavTarihi.difference(simdi).inDays / 7).ceil();
+    return (hafta < 1) ? 1 : (hafta > 40 ? 40 : hafta);
   }
 
   void _yapayZekaProgramOlustur() async {
     setState(() => _analizYapiliyor = true);
     await Future.delayed(const Duration(seconds: 2));
+
     akilliProgramTablosu.clear();
     List<Map<String, dynamic>> havuz = [];
+
     bool sadeceTYT = (secilenSinif == "9" ||
         secilenSinif == "10" ||
         secilenSinif == "11" ||
@@ -960,11 +1112,14 @@ class _YapayZekaAsistanEkraniState extends State<YapayZekaAsistanEkrani>
         else if (secilenAlan == "Eşit Ağırlık" &&
             (dersAdi.contains("Mat") ||
                 dersAdi.contains("Edebiyat") ||
+                dersAdi.contains("Tarih") ||
+                dersAdi.contains("Coğrafya") ||
                 dersAdi.contains("TYT")))
           dersUygun = true;
         else
           dersUygun = true;
       }
+
       if (dersUygun) {
         int katsayi = detay['katsayi'] as int;
         List<String> konular = detay['konular'] as List<String>;
@@ -976,13 +1131,17 @@ class _YapayZekaAsistanEkraniState extends State<YapayZekaAsistanEkrani>
         }
       }
     });
+
     if (havuz.isEmpty) havuz.add({'ders': 'Tekrar', 'konu': 'Soru Çözümü'});
     havuz.shuffle();
-    int dersSayisi = ((bitisSaati.hour * 60 + bitisSaati.minute) -
-            (baslangicSaati.hour * 60 + baslangicSaati.minute)) ~/
-        50;
+
+    int baslangicDakika = baslangicSaati.hour * 60 + baslangicSaati.minute;
+    int bitisDakika = bitisSaati.hour * 60 + bitisSaati.minute;
+    int dersSayisi = ((bitisDakika - baslangicDakika) / 50).floor();
     if (dersSayisi < 1) dersSayisi = 1;
-    int konuSayaci = 0, toplamHafta = _hesaplaKalanHaftalar();
+
+    int konuSayaci = 0;
+    int toplamHafta = _hesaplaKalanHaftalar();
 
     for (int h = 0; h < toplamHafta; h++) {
       List<Map<String, dynamic>> buHafta = [];
@@ -994,19 +1153,18 @@ class _YapayZekaAsistanEkraniState extends State<YapayZekaAsistanEkrani>
         List<Map<String, dynamic>> gunlukBloklar = [];
         for (int i = 0; i < dersSayisi; i++) {
           var secilen = havuz[konuSayaci % havuz.length];
-          int dk =
-              (baslangicSaati.hour * 60 + baslangicSaati.minute) + (i * 50);
-          gunlukBloklar.add({
-            'saat': "${dk ~/ 60}:${(dk % 60).toString().padLeft(2, '0')}",
-            'ders': secilen['ders'],
-            'konu': secilen['konu']
-          });
+          int dersBaslamaDk = baslangicDakika + (i * 50);
+          String saat =
+              "${(dersBaslamaDk / 60).floor().toString().padLeft(2, '0')}:${(dersBaslamaDk % 60).toString().padLeft(2, '0')}";
+          gunlukBloklar.add(
+              {'saat': saat, 'ders': secilen['ders'], 'konu': secilen['konu']});
           konuSayaci++;
         }
         buHafta.add({'gun': gun, 'bloklar': gunlukBloklar});
       }
       akilliProgramTablosu.add(buHafta);
     }
+
     _tabController = TabController(length: toplamHafta, vsync: this);
     if (mounted)
       setState(() {
@@ -1021,171 +1179,218 @@ class _YapayZekaAsistanEkraniState extends State<YapayZekaAsistanEkrani>
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
-                title: const Text("Değiştir"),
-                content: DropdownButton<String>(
-                    isExpanded: true,
-                    value: tumDerslerGlobal.containsKey(yeniDers) ? yeniDers : null,
-                    items: tumDerslerGlobal.keys
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) {
-                      setState(() {
-                        akilliProgramTablosu[haftaIndex][gunIndex]['bloklar']
-                            [blokIndex]['ders'] = v;
-                        akilliProgramTablosu[haftaIndex][gunIndex]['bloklar']
-                            [blokIndex]['konu'] = "Manuel";
-                      });
-                      Navigator.pop(context);
-                    }),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("İptal"))
-                ]));
+              title: const Text("Dersi Değiştir"),
+              content: DropdownButton<String>(
+                isExpanded: true,
+                value: tumDerslerGlobal.containsKey(yeniDers) ? yeniDers : null,
+                items: tumDerslerGlobal.keys
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
+                onChanged: (v) {
+                  setState(() {
+                    akilliProgramTablosu[haftaIndex][gunIndex]['bloklar']
+                        [blokIndex]['ders'] = v;
+                    akilliProgramTablosu[haftaIndex][gunIndex]['bloklar']
+                        [blokIndex]['konu'] = "Manuel Değişim";
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ));
+  }
+
+  void _kaydetVeCik() {
+    VeriDeposu.programiKaydet(akilliProgramTablosu);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Program kaydedildi!"), backgroundColor: Colors.green));
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     if (_programHazir)
       return Scaffold(
-          appBar: AppBar(
-              title: const Text("AI Program"),
-              backgroundColor: Colors.indigo,
-              bottom: TabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  tabs: List.generate(
-                      _tabController.length, (i) => Tab(text: "${i + 1}.H")))),
-          body: TabBarView(
-              controller: _tabController,
-              children: akilliProgramTablosu
-                  .asMap()
-                  .entries
-                  .map((entry) => SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text("GÜN")),
-                            DataColumn(label: Text("DERS 1")),
-                            DataColumn(label: Text("DERS 2")),
-                            DataColumn(label: Text("DERS 3")),
-                            DataColumn(label: Text("DERS 4"))
-                          ],
-                          rows: entry.value.map((gun) {
-                            List blk = gun['bloklar'];
-                            return DataRow(cells: [
-                              DataCell(Text(gun['gun'])),
-                              ...List.generate(
-                                  4,
-                                  (i) => i < blk.length
-                                      ? DataCell(InkWell(
-                                          onTap: () => _hucreyiDuzenle(
-                                              entry.key,
-                                              entry.value.indexOf(gun),
-                                              i),
-                                          child: Text(
-                                              "${blk[i]['ders']}\n${blk[i]['konu']}",
-                                              style: const TextStyle(
-                                                  fontSize: 10))))
-                                      : const DataCell(Text("-")))
-                            ]);
-                          }).toList())))
-                  .toList()),
-          floatingActionButton: FloatingActionButton(
-              onPressed: () {
-                VeriDeposu.programiKaydet(akilliProgramTablosu);
-                Navigator.pop(context);
-              },
-              child: const Icon(Icons.save)));
+        appBar: AppBar(
+            title: const Text("AI Program"),
+            backgroundColor: Colors.indigo,
+            bottom: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: List.generate(_tabController.length,
+                    (i) => Tab(text: "${i + 1}. Hafta")))),
+        body: TabBarView(
+            controller: _tabController,
+            children: akilliProgramTablosu
+                .asMap()
+                .entries
+                .map((entry) => _buildHaftaTablosu(entry.key, entry.value))
+                .toList()),
+        floatingActionButton: FloatingActionButton.extended(
+            onPressed: _kaydetVeCik,
+            label: const Text("KAYDET"),
+            icon: const Icon(Icons.save)),
+      );
+
     if (_analizYapiliyor)
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
     return Scaffold(
-        appBar: AppBar(
-            title: const Text("AI Asistan"), backgroundColor: Colors.indigo),
-        body: Stepper(
-            currentStep: _currentStep,
-            onStepContinue: () {
-              if (_currentStep < 3)
-                setState(() => _currentStep++);
-              else
-                _yapayZekaProgramOlustur();
-            },
-            onStepCancel: () {
-              if (_currentStep > 0) setState(() => _currentStep--);
-            },
-            steps: [
-              Step(
-                  title: const Text("Sınıf"),
-                  content: DropdownButtonFormField(
-                      value: secilenSinif,
-                      items: ["9", "10", "11", "12", "Mezun"]
-                          .map(
-                              (s) => DropdownMenuItem(value: s, child: Text(s)))
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => secilenSinif = v.toString()))),
-              Step(
-                  title: const Text("Alan"),
-                  content: DropdownButtonFormField(
-                      value: secilenAlan,
-                      items: [
-                        "Sayısal",
-                        "Sözel",
-                        "Eşit Ağırlık",
-                        "Dil",
-                        "Sadece TYT"
-                      ]
-                          .map(
-                              (a) => DropdownMenuItem(value: a, child: Text(a)))
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => secilenAlan = v.toString()))),
-              Step(
-                  title: const Text("Zaman"),
-                  content: Column(children: [
-                    Row(children: [
-                      TextButton(
-                          onPressed: () async {
-                            var t = await showTimePicker(
-                                context: context, initialTime: baslangicSaati);
-                            if (t != null) setState(() => baslangicSaati = t);
-                          },
-                          child:
-                              Text("Başla: ${baslangicSaati.format(context)}")),
-                      TextButton(
-                          onPressed: () async {
-                            var t = await showTimePicker(
-                                context: context, initialTime: bitisSaati);
-                            if (t != null) setState(() => bitisSaati = t);
-                          },
-                          child: Text("Bitir: ${bitisSaati.format(context)}"))
-                    ]),
-                    const Text("Tatil"),
-                    Wrap(
-                        children: gunler
-                            .map((g) => ChoiceChip(
-                                label: Text(g),
-                                selected: tatilGunu == g,
-                                onSelected: (v) =>
-                                    setState(() => tatilGunu = g)))
-                            .toList())
-                  ])),
-              Step(
-                  title: const Text("Konu Eleme"),
-                  content: Container(
-                      height: 300,
-                      child: ListView(
-                          children: konuDurumlari.keys
-                              .map((key) => CheckboxListTile(
-                                  title: Text(key),
-                                  value: konuDurumlari[key],
-                                  onChanged: (v) =>
-                                      setState(() => konuDurumlari[key] = v!)))
-                              .toList())))
-            ]));
+      appBar: AppBar(
+          title: const Text("AI Asistan"), backgroundColor: Colors.indigo),
+      body: Stepper(
+          currentStep: _currentStep,
+          onStepContinue: () {
+            if (_currentStep < 3)
+              setState(() => _currentStep++);
+            else
+              _yapayZekaProgramOlustur();
+          },
+          onStepCancel: () {
+            if (_currentStep > 0) setState(() => _currentStep--);
+          },
+          controlsBuilder: (ctx, details) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 20.0),
+              child: Row(children: [
+                ElevatedButton(
+                    onPressed: details.onStepContinue,
+                    child: Text(
+                        _currentStep == 3 ? "PROGRAMI HAZIRLA" : "İLERLE")),
+                const SizedBox(width: 10),
+                if (_currentStep > 0)
+                  TextButton(
+                      onPressed: details.onStepCancel,
+                      child: const Text("Geri")),
+              ]),
+            );
+          },
+          steps: [
+            Step(
+                title: const Text("Sınıf"),
+                content: DropdownButtonFormField(
+                    value: secilenSinif,
+                    items: ["9", "10", "11", "12", "Mezun"]
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (v) =>
+                        setState(() => secilenSinif = v.toString()))),
+            Step(
+                title: const Text("Alan"),
+                content: DropdownButtonFormField(
+                    value: secilenAlan,
+                    items: [
+                      "Sayısal",
+                      "Sözel",
+                      "Eşit Ağırlık",
+                      "Dil",
+                      "Sadece TYT"
+                    ]
+                        .map((a) => DropdownMenuItem(value: a, child: Text(a)))
+                        .toList(),
+                    onChanged: (v) =>
+                        setState(() => secilenAlan = v.toString()))),
+            Step(
+                title: const Text("Zaman"),
+                content: Column(children: [
+                  Row(children: [
+                    TextButton(
+                        onPressed: () async {
+                          var t = await showTimePicker(
+                              context: context, initialTime: baslangicSaati);
+                          if (t != null) setState(() => baslangicSaati = t);
+                        },
+                        child:
+                            Text("Başla: ${baslangicSaati.format(context)}")),
+                    TextButton(
+                        onPressed: () async {
+                          var t = await showTimePicker(
+                              context: context, initialTime: bitisSaati);
+                          if (t != null) setState(() => bitisSaati = t);
+                        },
+                        child: Text("Bitir: ${bitisSaati.format(context)}"))
+                  ]),
+                  const Text("Tatil Günü"),
+                  Wrap(
+                      children: gunler
+                          .map((g) => ChoiceChip(
+                              label: Text(g),
+                              selected: tatilGunu == g,
+                              onSelected: (v) => setState(() => tatilGunu = g)))
+                          .toList())
+                ])),
+            Step(
+                title: const Text("Konu Eleme"),
+                content: Container(
+                    height: 300,
+                    child: ListView(
+                        children: konuDurumlari.keys
+                            .map((key) => CheckboxListTile(
+                                title: Text(key),
+                                value: konuDurumlari[key],
+                                onChanged: (v) =>
+                                    setState(() => konuDurumlari[key] = v!)))
+                            .toList())))
+          ]),
+    );
+  }
+
+  Widget _buildHaftaTablosu(
+      int haftaIndex, List<Map<String, dynamic>> haftaVerisi) {
+    return SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+                columns: const [
+                  DataColumn(label: Text("GÜN")),
+                  DataColumn(label: Text("DERS 1")),
+                  DataColumn(label: Text("DERS 2")),
+                  DataColumn(label: Text("DERS 3")),
+                  DataColumn(label: Text("DERS 4"))
+                ],
+                rows: haftaVerisi.asMap().entries.map((gunEntry) {
+                  var gun = gunEntry.value;
+                  List bloklar = gun['bloklar'];
+                  if (bloklar.isEmpty)
+                    return DataRow(cells: [
+                      DataCell(Text(gun['gun'],
+                          style: const TextStyle(color: Colors.red))),
+                      const DataCell(Text("TATİL")),
+                      const DataCell(Text("-")),
+                      const DataCell(Text("-")),
+                      const DataCell(Text("-"))
+                    ]);
+                  List<DataCell> cells = [
+                    DataCell(Text(gun['gun'],
+                        style: const TextStyle(fontWeight: FontWeight.bold)))
+                  ];
+                  for (int i = 0; i < 4; i++) {
+                    if (i < bloklar.length)
+                      cells.add(DataCell(InkWell(
+                          onTap: () =>
+                              _hucreyiDuzenle(haftaIndex, gunEntry.key, i),
+                          child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(bloklar[i]['ders'],
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12)),
+                                Text(bloklar[i]['konu'],
+                                    style: const TextStyle(fontSize: 10))
+                              ]))));
+                    else
+                      cells.add(const DataCell(Text("-")));
+                  }
+                  return DataRow(cells: cells);
+                }).toList())));
   }
 }
 
+// ============================================================
+// 6. MANUEL PROGRAMLAMA (FULL STEPPER)
+// ============================================================
 class ManuelProgramEkrani extends StatefulWidget {
   const ManuelProgramEkrani({super.key});
   @override
@@ -1199,7 +1404,7 @@ class _ManuelProgramEkraniState extends State<ManuelProgramEkrani>
   double sure = 8;
   TimeOfDay basla = const TimeOfDay(hour: 18, minute: 0),
       bitis = const TimeOfDay(hour: 22, minute: 0);
-  String tatil = "Pazar";
+  String secilenAlan = "Sayısal", tatil = "Pazar";
   Map<String, bool> sec = {};
   List<List<Map<String, dynamic>>> tb = [];
   late TabController _tc;
@@ -1212,6 +1417,7 @@ class _ManuelProgramEkraniState extends State<ManuelProgramEkrani>
     "Cumartesi",
     "Pazar"
   ];
+
   @override
   void initState() {
     super.initState();
@@ -1260,7 +1466,7 @@ class _ManuelProgramEkraniState extends State<ManuelProgramEkrani>
     if (_hazir)
       return Scaffold(
           appBar: AppBar(
-              title: const Text("Manuel"),
+              title: const Text("Manuel Sonuç"),
               backgroundColor: Colors.orange,
               bottom: TabBar(
                   controller: _tc,
@@ -1281,9 +1487,13 @@ class _ManuelProgramEkraniState extends State<ManuelProgramEkrani>
                               .map((g) => DataRow(cells: [
                                     DataCell(Text(g['gun'])),
                                     DataCell(Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: (g['bloklar'] as List)
                                             .map((b) => Text(
-                                                "${b['saat']} ${b['ders']}-${b['konu']}"))
+                                                "${b['saat']} ${b['ders']}-${b['konu']}",
+                                                style: const TextStyle(
+                                                    fontSize: 10)))
                                             .toList()))
                                   ]))
                               .toList())))
@@ -1294,49 +1504,61 @@ class _ManuelProgramEkraniState extends State<ManuelProgramEkrani>
                 Navigator.pop(context);
               },
               child: const Icon(Icons.save)));
+
     return Scaffold(
-        appBar: AppBar(
-            title: const Text("Manuel Program"),
-            backgroundColor: Colors.orange),
-        body: Stepper(
-            currentStep: _currentStep,
-            onStepContinue: () {
-              if (_currentStep < 2)
-                setState(() => _currentStep++);
-              else
-                _olustur();
-            },
-            onStepCancel: () {
-              if (_currentStep > 0) setState(() => _currentStep--);
-            },
-            steps: [
-              Step(
-                  title: const Text("Zaman"),
-                  content: Column(children: [
-                    Slider(
-                        value: sure,
-                        min: 1,
-                        max: 20,
-                        onChanged: (v) => setState(() => sure = v)),
-                    Text("${sure.toInt()} Hafta")
-                  ])),
-              Step(
-                  title: const Text("Dersler"),
-                  content: Container(
-                      height: 300,
-                      child: ListView(
-                          children: sec.keys
-                              .map((k) => CheckboxListTile(
-                                  title: Text(k),
-                                  value: sec[k],
-                                  onChanged: (v) =>
-                                      setState(() => sec[k] = v!)))
-                              .toList()))),
-              Step(title: const Text("Bitti"), content: const Text("Hazırla."))
-            ]));
+      appBar: AppBar(
+          title: const Text("Manuel Program"), backgroundColor: Colors.orange),
+      body: Stepper(
+          currentStep: _currentStep,
+          onStepContinue: () {
+            if (_currentStep < 2)
+              setState(() => _currentStep++);
+            else
+              _olustur();
+          },
+          onStepCancel: () {
+            if (_currentStep > 0) setState(() => _currentStep--);
+          },
+          steps: [
+            Step(
+                title: const Text("Zaman"),
+                content: Column(children: [
+                  Slider(
+                      value: sure,
+                      min: 1,
+                      max: 20,
+                      onChanged: (v) => setState(() => sure = v)),
+                  Text("${sure.toInt()} Hafta"),
+                  Wrap(
+                      children: gunler
+                          .map((g) => ChoiceChip(
+                              label: Text(g),
+                              selected: tatil == g,
+                              onSelected: (v) => setState(() => tatil = g)))
+                          .toList())
+                ])),
+            Step(
+                title: const Text("Dersler"),
+                content: Container(
+                    height: 300,
+                    child: ListView(
+                        children: sec.keys
+                            .map((k) => CheckboxListTile(
+                                title: Text(k),
+                                value: sec[k],
+                                onChanged: (v) => setState(() => sec[k] = v!)))
+                            .toList()))),
+            Step(
+                title: const Text("Tamamla"),
+                content: const Text("Hazırla butonuna bas."))
+          ]),
+    );
   }
 }
 
+// ============================================================
+// 7. DİĞER EKRANLAR
+// ============================================================
 class TumProgramEkrani extends StatefulWidget {
   const TumProgramEkrani({super.key});
   @override
@@ -1511,10 +1733,13 @@ class _OkulSinavlariEkraniState extends State<OkulSinavlariEkrani> {
 }
 
 class BasariGrafigiEkrani extends StatelessWidget {
-  const BasariGrafigiEkrani({super.key});
+  final String ogrenciId;
+  const BasariGrafigiEkrani({super.key, required this.ogrenciId});
   @override
   Widget build(BuildContext context) {
-    var l = VeriDeposu.denemeListesi.where((d) => d.tur == "TYT").toList();
+    var l = VeriDeposu.denemeListesi
+        .where((d) => d.ogrenciId == ogrenciId && d.tur == "TYT")
+        .toList();
     if (l.length > 5) l = l.sublist(l.length - 5);
     return Scaffold(
         appBar: AppBar(
@@ -1538,6 +1763,29 @@ class BasariGrafigiEkrani extends StatelessWidget {
                                   Text("${d.tarih.day}/${d.tarih.month}")
                                 ]))
                         .toList())));
+  }
+}
+
+class DenemeListesiEkrani extends StatelessWidget {
+  final String? ogrenciId;
+  const DenemeListesiEkrani({super.key, this.ogrenciId});
+  @override
+  Widget build(BuildContext context) {
+    var l = ogrenciId != null
+        ? VeriDeposu.denemeListesi
+            .where((d) => d.ogrenciId == ogrenciId)
+            .toList()
+        : VeriDeposu.denemeListesi;
+    return Scaffold(
+        appBar: AppBar(
+            title: const Text("Denemeler"), backgroundColor: Colors.deepPurple),
+        body: ListView.builder(
+            itemCount: l.length,
+            itemBuilder: (c, i) => Card(
+                child: ListTile(
+                    title: Text(l[i].tur),
+                    subtitle: Text("Net: ${l[i].toplam}"),
+                    trailing: Text("${l[i].tarih.day}/${l[i].tarih.month}")))));
   }
 }
 
@@ -1578,16 +1826,43 @@ class _SinavSayaciEkraniState extends State<SinavSayaciEkrani> {
 
 class YoneticiPaneli extends StatelessWidget {
   const YoneticiPaneli({super.key});
+  void _excel(BuildContext c) async {
+    String s = await VeriDeposu.excelDenemeYukle();
+    ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text(s)));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar:
-            AppBar(title: const Text("Yönetici"), backgroundColor: Colors.red),
-        body: ListView(
-            children: VeriDeposu.ogrenciler
-                .map((o) => ListTile(
-                    title: Text(o.ad), subtitle: Text("Puan: ${o.puan}")))
-                .toList()));
+    return DefaultTabController(
+        length: 3,
+        child: Scaffold(
+            appBar: AppBar(
+                title: const Text("Yönetici"),
+                backgroundColor: Colors.red,
+                bottom: const TabBar(tabs: [
+                  Tab(text: "İşlem"),
+                  Tab(text: "Atama"),
+                  Tab(text: "Liste")
+                ])),
+            body: TabBarView(children: [
+              Column(children: [
+                ElevatedButton(
+                    onPressed: () => _excel(context),
+                    child: const Text("Excel Yükle")),
+                const Text("Excel Formatı: [0]No [1]Tür [2]Tr [3]Mat...")
+              ]),
+              ListView(
+                  children: VeriDeposu.ogrenciler
+                      .map((o) => ListTile(
+                          title: Text(o.ad),
+                          subtitle: Text("Atanan: ${o.atananOgretmenId}")))
+                      .toList()),
+              ListView(
+                  children: VeriDeposu.ogrenciler
+                      .map((o) => ListTile(
+                          title: Text(o.ad), trailing: Text("${o.puan} P")))
+                      .toList())
+            ])));
   }
 }
 
@@ -1596,8 +1871,21 @@ class OgretmenPaneli extends StatelessWidget {
   const OgretmenPaneli({super.key, required this.aktifOgretmenId});
   @override
   Widget build(BuildContext context) {
+    var l = VeriDeposu.ogrenciler
+        .where((o) => o.atananOgretmenId == aktifOgretmenId)
+        .toList();
     return Scaffold(
-        appBar: AppBar(title: const Text("Öğretmen Paneli")),
-        body: const Center(child: Text("Öğrenci Listesi")));
+        appBar: AppBar(
+            title: const Text("Öğretmen Paneli"), backgroundColor: Colors.teal),
+        body: ListView.builder(
+            itemCount: l.length,
+            itemBuilder: (c, i) => ListTile(
+                title: Text(l[i].ad),
+                subtitle: Text(l[i].sinif),
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (c) =>
+                            OgrenciAnaEkrani(ogrenciId: l[i].id))))));
   }
 }
